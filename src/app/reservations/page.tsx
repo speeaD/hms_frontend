@@ -2,15 +2,18 @@ import NativeDate from "@/components/NativeDate"
 import ReservationModal from "@/components/NewReservation"
 import { getReservations, getRoomId } from "@/lib/data"
 
-
+export const dynamic = "force-dynamic";
 
 export default async function Reservations() {
-    //get reservations from api
-    const reservations = await getReservations()
-    async function getRoomNumber(id: string) {
-        const room = await getRoomId(id)
-        return room.roomNumber
-    }
+    const reservations = await getReservations();
+    const roomNumbers = Object.fromEntries(
+        await Promise.all(
+            reservations.map(async (reservation) => {
+                const room = await getRoomId(reservation.roomId);
+                return [reservation.roomId, room.roomNumber || "N/A"];
+            })
+        )
+    );
 
     const getStatusStyles = (status: string) => {
         switch (status) {
@@ -70,7 +73,7 @@ export default async function Reservations() {
                                 {reservations.map((reservation, index) => (
                                     <tr key={index} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 text-sm text-gray-900">{reservation.firstName + " " + reservation.lastName}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{getRoomNumber(reservation.roomId)}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{roomNumbers[reservation.roomId] ?? "N/A"}</td>
                                         <td className="px-6 py-4 text-sm text-gray-600"><NativeDate date={reservation.checkInDate} /> -- <NativeDate date={reservation.checkOutDate} /></td>
                                         <td className="px-6 py-4 text-sm">
                                             <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusStyles(reservation.status)}`}>

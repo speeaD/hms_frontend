@@ -1,9 +1,11 @@
 import StaffModal from "@/components/NewStaff";
 import { getStaff } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function Staff() {
-
-
+ 
+ 
     const staffMembers = await getStaff();
 
     return (
