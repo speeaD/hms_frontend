@@ -1,4 +1,4 @@
-const baseUrl: String = "http://localhost:5001"
+const baseUrl: String = process.env.BACKEND_URL || "http://localhost:3000"
 
 export const getReservations = async () => {
     const data = await fetch(baseUrl + "/v1/reservation")
