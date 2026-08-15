@@ -1,6 +1,8 @@
 import { getRooms } from "@/lib/data";
 import RoomsClient from '@/components/RoomsClient';
 
+export const dynamic = "force-dynamic";
+
 export default async function Rooms(){
     const tabs = ['All Rooms', 'Room Types', 'Housekeeping'];
     const rooms =  await getRooms()

@@ -18,7 +18,7 @@ declare global {
         type: string
         price: number
         status: string
-        amenities: [string]
+        amenities: string[]
         capacity: number
     }
 
@@ -29,7 +29,7 @@ declare global {
         role: string
         phone: string
         email: string
-        shifts: [Object]
+        shifts: unknown[]
         status: string
     }
 }
