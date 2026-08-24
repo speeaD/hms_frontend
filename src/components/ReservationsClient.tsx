@@ -14,7 +14,15 @@ import {
   MoreVertical,
   Pencil,
 } from "lucide-react"
-import type { EnrichedReservation } from "@/app/reservations/page"
+interface EnrichedReservation {
+  guestName: string
+  roomNumber: string | number
+  checkInDate: string
+  checkOutDate: string
+  nights: number
+  source?: string | null
+  status: string
+}
 
 interface Props {
   reservations: EnrichedReservation[]
