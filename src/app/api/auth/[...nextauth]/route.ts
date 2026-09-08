@@ -1,8 +1,21 @@
 import NextAuth from "next-auth"
+import type { AuthOptions } from "next-auth"
+import type { User } from "next-auth"
+import type { JWT } from "next-auth/jwt"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { getSettingsData } from "@/lib/settings-data"
 
-export const authOptions = {
+type AuthUser = User & {
+  role: string
+  status: string
+}
+
+type AuthToken = JWT & {
+  role?: string
+  status?: string
+}
+
+export const authOptions: AuthOptions = {
   // Configure one or more authentication providers
   providers: [
     CredentialsProvider({
@@ -45,19 +58,23 @@ export const authOptions = {
     error: '/auth/error', // Error code passed in query string as ?error=
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       // Persist the role and other info to the token
       if (user) {
-        token.role = user.role
-        token.status = user.status
+        const authUser = user as AuthUser
+        const authToken = token as AuthToken
+        authToken.role = authUser.role
+        authToken.status = authUser.status
       }
       return token
     },
     async session({ session, token }) {
       // Send properties to the client, like role and status
       if (session.user) {
-        session.user.role = token.role
-        session.user.status = token.status
+        const sessionUser = session.user as User & { role?: string; status?: string }
+        const authToken = token as AuthToken
+        sessionUser.role = authToken.role
+        sessionUser.status = authToken.status
       }
       return session
     }
