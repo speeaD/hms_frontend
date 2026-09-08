@@ -3,23 +3,7 @@
 import { useState, useMemo } from "react";
 import { XCircle, CheckCircle2, Clock, Loader2, Plus, Edit, Trash2 } from "lucide-react";
 
-interface Staff {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  status: "active" | "inactive";
-  lastLogin: string; // ISO string
-}
 
-interface StaffShift {
-  id: string;
-  staffId: string;
-  date: string; // ISO string
-  startTime: string; // HH:MM
-  endTime: string; // HH:MM
-}
 
 interface StaffClientProps {
   staff: Staff[];
