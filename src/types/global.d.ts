@@ -1,7 +1,7 @@
 export {}
 declare global {
     interface Reservations {
-        _id: number
+        id: string
         firstName: string
         lastName: string
         email: string
@@ -9,27 +9,37 @@ declare global {
         roomId: string
         checkInDate: Date
         checkOutDate: Date
-        status: string
+        status: ReservationStatus
+        room?: Rooms
+        paymentStatus: PaymentStatus
+        numberOfGuests: number
+        totalAmount: number
+        createdAt: Date
+        updatedAt: Date
+        status: ReservationStatus
     }
 
     interface Rooms {
-        _id: number
+        id: string
         roomNumber: number
         type: string
         price: number
-        status: string
+        status: RoomStatus
         amenities: string[]
         capacity: number
+        bedType?: BedType
     }
 
-    interface Staff {
-        _id: number
-        firstName: string
-        lastName: string
-        role: string
-        phone: string
-        email: string
-        shifts: unknown[]
-        status: string
-    }
+    
+
+
+export type ReservationStatus = "pending" | "confirmed" | "checked_in" | "checked_out"| "cancelled";
+
+export type PaymentStatus = "pending" | "paid" | "refunded";
+
+export type RoomType = "single" | "double" | "suite" | "deluxe";
+
+export type BedType = "single" | "double" | "queen" | "king";
+
+export type RoomStatus = "available" | "occupied" | "maintenance" | "reserved";
 }

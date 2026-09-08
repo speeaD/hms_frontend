@@ -19,7 +19,6 @@ interface Props {
   guests: Guest[]
 }
 
-const PAGE_SIZE = 5
 const STATUS_OPTIONS: Guest['status'][] = ['Checked In', 'Checked Out']
 
 function formatDate(dateStr: string) {
@@ -46,6 +45,7 @@ export default function GuestsClient({ guests }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null)
   const [page, setPage] = useState(1)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
 
   const stats = useMemo(() => {
     const total = guests.length
@@ -68,11 +68,11 @@ export default function GuestsClient({ guests }: Props) {
     })
   }, [guests, search, statusFilters])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage))
   const currentPage = Math.min(page, totalPages)
-  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-  const rangeStart = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
-  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filtered.length)
+  const pageItems = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
+  const rangeStart = filtered.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1
+  const rangeEnd = Math.min(currentPage * rowsPerPage, filtered.length)
   const paginationRange = useMemo(() => getPaginationRange(currentPage, totalPages), [currentPage, totalPages])
 
   const toggleStatusFilter = (status: string) => {
@@ -196,6 +196,23 @@ export default function GuestsClient({ guests }: Props) {
               </div>
             )}
           </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Rows per page:</label>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value))
+                setPage(1)
+              }}
+              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
           <button className="p-2 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50">
             <Download size={16} />
           </button>
@@ -267,38 +284,43 @@ export default function GuestsClient({ guests }: Props) {
           <p className="text-sm text-gray-500">
             Showing {rangeStart} to {rangeEnd} of {filtered.length} guests
           </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="p-1.5 rounded-md text-gray-500 border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            {paginationRange.map((p, i) =>
-              p === 'ellipsis' ? (
-                <span key={`e-${i}`} className="w-8 h-8 flex items-center justify-center text-sm text-gray-400">
-                  …
-                </span>
-              ) : (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`w-8 h-8 text-sm font-medium rounded-md ${
-                    p === currentPage ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50 border border-gray-200'
-                  }`}
-                >
-                  {p}
-                </button>
-              )
-            )}
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="p-1.5 rounded-md text-gray-500 border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
-            >
-              <ChevronRight size={16} />
-            </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Rows per page:</label>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value))
+                  setPage(1)
+                }}
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>

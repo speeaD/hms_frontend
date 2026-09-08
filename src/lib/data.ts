@@ -1,11 +1,13 @@
+import { ROOMS_PATH } from "./config";
+
 const baseUrl = process.env.BACKEND_URL || "http://localhost:3000";
 
 const emptyRoom: Rooms = {
-    _id: 0,
+    id: "",
     roomNumber: 0,
     type: "",
     price: 0,
-    status: "unknown",
+    status: "available",
     amenities: [],
     capacity: 0,
 };
@@ -42,6 +44,107 @@ export const getRooms = async (): Promise<Rooms[]> => {
     return fetchJson<Rooms[]>('/v1/room/', []);
 };
 
+export async function getAvailableRooms(): Promise<Rooms[]> {
+  const rooms = await fetchJson<Rooms[]>(ROOMS_PATH, []);
+  return rooms.filter((room) => !room.status || room.status === "available");
+}
+
 export const getStaff = async (): Promise<Staff[]> => {
     return fetchJson<Staff[]>('/v1/staff/', []);
+};
+
+// New functions for room creation and bulk upload
+export const createRoom = async (roomData: Omit<Rooms, 'id'>): Promise<Rooms | null> => {
+    if (!process.env.BACKEND_URL) {
+        // Mock response for development
+        return {
+            id: `room_${Date.now()}`,
+            ...roomData,
+        };
+    }
+
+    try {
+        const response = await fetch(`${baseUrl}/v1/room/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(roomData),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to create room: ${response.status}`);
+        }
+
+        return (await response.json()) as Rooms;
+    } catch (error) {
+        console.error('Error creating room:', error);
+        return null;
+    }
+};
+
+export const bulkUploadRooms = async (formData: FormData): Promise<{ success: number; total: number }> => {
+    if (!process.env.BACKEND_URL) {
+        // Mock response for development
+        // Simulate parsing CSV and creating rooms
+        return { success: 5, total: 5 };
+    }
+
+    try {
+        const response = await fetch(`${baseUrl}/v1/room/bulk`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to bulk upload rooms: ${response.status}`);
+        }
+
+        return (await response.json()) as { success: number; total: number };
+    } catch (error) {
+        console.error('Error bulk uploading rooms:', error);
+        return { success: 0, total: 0 };
+    }
+};
+
+// New function for staff shifts
+export const getStaffShifts = async () => {
+    if (!process.env.BACKEND_URL) {
+        // Mock data for development
+        const today = new Date();
+        return [
+            {
+                id: 'shift_1',
+                staffId: 'staff_1',
+                date: today.toISOString(),
+                startTime: '08:00',
+                endTime: '16:00',
+            },
+            {
+                id: 'shift_2',
+                staffId: 'staff_2',
+                date: today.toISOString(),
+                startTime: '16:00',
+                endTime: '00:00',
+            },
+            {
+                id: 'shift_3',
+                staffId: 'staff_3',
+                date: new Date(today.setDate(today.getDate() + 1)).toISOString(),
+                startTime: '00:00',
+                endTime: '08:00',
+            },
+        ];
+    }
+
+    try {
+        const response = await fetch(`${baseUrl}/v1/staff/shifts`, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch staff shifts: ${response.status}`);
+        }
+        return (await response.json()) as StaffShift[];
+    } catch (error) {
+        console.error('Error fetching staff shifts:', error);
+        return [];
+    }
 };
