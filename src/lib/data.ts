@@ -1,7 +1,13 @@
-import { cookies } from "next/headers";
 import { ROOMS_PATH } from "./config";
 
-const token = (await cookies()).get("auth-token")?.value || "";
+// Helper function to get JWT token from sessionStorage (since it's httpOnly cookie)
+const getAuthToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return sessionStorage.getItem("auth-token");
+  }
+  return null
+}
+
 const baseUrl = process.env.BACKEND_URL || "http://localhost:3000";
 
 const emptyRoom: Rooms = {
@@ -14,7 +20,7 @@ const emptyRoom: Rooms = {
     capacity: 0,
 };
 
-async function fetchJson<T>(path: string, fallback: T, token: string): Promise<T> {
+async function fetchJson<T>(path: string, fallback: T): Promise<T> {
     if (!process.env.BACKEND_URL) {
         return fallback;
     }
@@ -22,14 +28,14 @@ async function fetchJson<T>(path: string, fallback: T, token: string): Promise<T
     try {
       const headers: HeadersInit = {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       }
 
       // Add Authorization header if token exists
-    
+      const token = getAuthToken()
       if (token) {
         headers["Authorization"] = `Bearer ${token}`
       }
+      console.log(`Fetching ${path} from backend with headers:`, headers);
 
       const response = await fetch(`${baseUrl}${path}`, {
         method: 'GET',
@@ -49,25 +55,25 @@ async function fetchJson<T>(path: string, fallback: T, token: string): Promise<T
 }
 
 export const getReservations = async (): Promise<Reservations[]> => {
-    return fetchJson<Reservations[]>('/v1/reservation', [], token);
+    return fetchJson<Reservations[]>('/v1/reservation', []);
 };
 
 export const getRoomId = async (id: string): Promise<Rooms> => {
-    const room = await fetchJson<Rooms | null>(`/v1/room/${id}`, null, token);
+    const room = await fetchJson<Rooms | null>(`/v1/room/${id}`, null);
     return room ?? emptyRoom;
 };
 
 export const getRooms = async (): Promise<Rooms[]> => {
-    return fetchJson<Rooms[]>('/v1/room/', [], token);
+    return fetchJson<Rooms[]>('/v1/room/', []);
 };
 
 export async function getAvailableRooms(): Promise<Rooms[]> {
-  const rooms = await fetchJson<Rooms[]>(ROOMS_PATH, [], token);
+  const rooms = await fetchJson<Rooms[]>(ROOMS_PATH, []);
   return rooms.filter((room) => !room.status || room.status === "available");
 }
 
 export const getStaff = async (): Promise<Staff[]> => {
-    return fetchJson<Staff[]>('/v1/staff/', [], token);
+    return fetchJson<Staff[]>('/v1/staff/', []);
 };
 
 // New functions for room creation and bulk upload
@@ -83,11 +89,10 @@ export const createRoom = async (roomData: Omit<Rooms, 'id'>): Promise<Rooms | n
     try {
       const headers: HeadersInit = {
         "Content-Type": "application/json"
-
       }
 
       // Add Authorization header if token exists
-     
+      const token = getAuthToken()
       if (token) {
         headers["Authorization"] = `Bearer ${token}`
       }
@@ -167,7 +172,7 @@ export const getStaffShifts = async () => {
       const headers: HeadersInit = {}
 
       // Add Authorization header if token exists
-      
+      const token = getAuthToken()
       if (token) {
         headers["Authorization"] = `Bearer ${token}`
       }
