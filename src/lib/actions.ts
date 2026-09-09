@@ -5,11 +5,11 @@ import { requireApiBaseUrl, RESERVATIONS_PATH } from "./config";
 import { cookies } from 'next/headers';
 
 // Helper function to get JWT token from cookies (for server actions)
-const getAuthToken = (): string | null => {
+const getAuthToken = async (): Promise<string | null> => {
   // For server actions, we need to get the token from cookies
   try {
     const tokenStore = cookies();
-    return tokenStore.get('auth-token')?.value || null;
+    return (await tokenStore).get('auth-token')?.value || null;
   } catch (error) {
     // If we're not in a server context (e.g., during SSR or SSG), return null
     return null;
@@ -132,7 +132,7 @@ export async function updateReservationStatus(
       headers: {
         "Content-Type": "application/json",
         // Add Authorization header if token exists
-        ...(getAuthToken() ? { "Authorization": `Bearer ${getAuthToken()}` } : {}),
+        ...(await getAuthToken() ? { "Authorization": `Bearer ${getAuthToken()}` } : {}),
       },
       body: JSON.stringify({ status: status }),
     });
