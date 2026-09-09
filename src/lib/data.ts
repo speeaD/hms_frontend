@@ -1,13 +1,6 @@
 import { cookies } from "next/headers";
 import { ROOMS_PATH } from "./config";
 
-// Helper function to get JWT token from sessionStorage (since it's httpOnly cookie)
-// const getAuthToken = (): string | null => {
-//   if (typeof window !== 'undefined') {
-//     return (cookies()).get("auth-token")?.value || "";
-//   }
-//   return null
-// }
 const token = (await cookies()).get("auth-token")?.value || "";
 const baseUrl = process.env.BACKEND_URL || "http://localhost:3000";
 
