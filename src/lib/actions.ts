@@ -2,6 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { requireApiBaseUrl, RESERVATIONS_PATH } from "./config";
+import { cookies } from 'next/headers';
+
+// Helper function to get JWT token from cookies (for server actions)
+const getAuthToken = (): string | null => {
+  // For server actions, we need to get the token from cookies
+  try {
+    const tokenStore = cookies();
+    return tokenStore.get('auth-token')?.value || null;
+  } catch (error) {
+    // If we're not in a server context (e.g., during SSR or SSG), return null
+    return null;
+  }
+}
 
 export type ActionResult<T = undefined> =
   | { success: true; data: T }
@@ -68,11 +81,18 @@ export async function createReservation(
     paymentStatus: input.markAsPaid ? "paid" : "pending",
   };
 
+  // Get auth token for authorization header
+  const token = getAuthToken();
+
   let res: Response;
   try {
     res = await fetch(`${base}${RESERVATIONS_PATH}reserve-room`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // Add Authorization header if token exists
+        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(payload),
     });
   } catch {
@@ -109,7 +129,11 @@ export async function updateReservationStatus(
   try {
     res = await fetch(`${base}${RESERVATIONS_PATH}/update-reservation/${encodeURIComponent(id)}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // Add Authorization header if token exists
+        ...(getAuthToken() ? { "Authorization": `Bearer ${getAuthToken()}` } : {}),
+      },
       body: JSON.stringify({ status: status }),
     });
   } catch {

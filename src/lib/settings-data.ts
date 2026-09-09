@@ -21,14 +21,14 @@ export const getSettingsData = async (): Promise<{
   systemSettings: SystemSettings[];
   users: User[];
 }> => {
-  // Mock data for settings
+  // Mock data for settings (users removed as auth is now handled via backend API)
   return {
     systemSettings: [
       {
         id: "1",
         category: "general",
         key: "hotel_name",
-        value: "Grand Horizon Hotel",
+        value: "Royal Kakars Hotel",
         description: "Name of the hotel property",
         updatedAt: new Date("2026-09-01"),
       },
@@ -57,34 +57,6 @@ export const getSettingsData = async (): Promise<{
         updatedAt: new Date("2026-09-05"),
       },
     ],
-    users: [
-      {
-        id: "1",
-        firstName: "Nmesoma",
-        lastName: "Administrator",
-        email: "admin@hotelier.com",
-        role: "admin",
-        status: "active",
-        lastLogin: new Date("2026-09-07"),
-      },
-      {
-        id: "2",
-        firstName: "John",
-        lastName: "Smith",
-        email: "john.smith@hotelier.com",
-        role: "manager",
-        status: "active",
-        lastLogin: new Date("2026-09-06"),
-      },
-      {
-        id: "3",
-        firstName: "Jane",
-        lastName: "Doe",
-        email: "jane.doe@hotelier.com",
-        role: "staff",
-        status: "active",
-        lastLogin: new Date("2026-09-05"),
-      },
-    ],
+    users: [], // Empty array as users are now fetched from backend API
   };
 };

@@ -1,5 +1,14 @@
+import { cookies } from "next/headers";
 import { ROOMS_PATH } from "./config";
 
+// Helper function to get JWT token from sessionStorage (since it's httpOnly cookie)
+// const getAuthToken = (): string | null => {
+//   if (typeof window !== 'undefined') {
+//     return (cookies()).get("auth-token")?.value || "";
+//   }
+//   return null
+// }
+const token = (await cookies()).get("auth-token")?.value || "";
 const baseUrl = process.env.BACKEND_URL || "http://localhost:3000";
 
 const emptyRoom: Rooms = {
@@ -12,19 +21,34 @@ const emptyRoom: Rooms = {
     capacity: 0,
 };
 
-async function fetchJson<T>(path: string, fallback: T): Promise<T> {
+async function fetchJson<T>(path: string, fallback: T, token: string): Promise<T> {
     if (!process.env.BACKEND_URL) {
         return fallback;
     }
 
     try {
-        const response = await fetch(`${baseUrl}${path}`, { cache: "no-store" });
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
 
-        if (!response.ok) {
-            throw new Error(`Request failed with status ${response.status}`);
-        }
+      // Add Authorization header if token exists
+    
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`
+      }
 
-        return (await response.json()) as T;
+      const response = await fetch(`${baseUrl}${path}`, {
+        method: 'GET',
+        headers: headers,
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      return (await response.json()) as T;
     } catch (error) {
         console.warn(`Unable to reach backend for ${path}:`, error);
         return fallback;
@@ -32,25 +56,25 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
 }
 
 export const getReservations = async (): Promise<Reservations[]> => {
-    return fetchJson<Reservations[]>('/v1/reservation', []);
+    return fetchJson<Reservations[]>('/v1/reservation', [], token);
 };
 
 export const getRoomId = async (id: string): Promise<Rooms> => {
-    const room = await fetchJson<Rooms | null>(`/v1/room/${id}`, null);
+    const room = await fetchJson<Rooms | null>(`/v1/room/${id}`, null, token);
     return room ?? emptyRoom;
 };
 
 export const getRooms = async (): Promise<Rooms[]> => {
-    return fetchJson<Rooms[]>('/v1/room/', []);
+    return fetchJson<Rooms[]>('/v1/room/', [], token);
 };
 
 export async function getAvailableRooms(): Promise<Rooms[]> {
-  const rooms = await fetchJson<Rooms[]>(ROOMS_PATH, []);
+  const rooms = await fetchJson<Rooms[]>(ROOMS_PATH, [], token);
   return rooms.filter((room) => !room.status || room.status === "available");
 }
 
 export const getStaff = async (): Promise<Staff[]> => {
-    return fetchJson<Staff[]>('/v1/staff/', []);
+    return fetchJson<Staff[]>('/v1/staff/', [], token);
 };
 
 // New functions for room creation and bulk upload
@@ -64,11 +88,20 @@ export const createRoom = async (roomData: Omit<Rooms, 'id'>): Promise<Rooms | n
     }
 
     try {
+      const headers: HeadersInit = {
+        "Content-Type": "application/json"
+
+      }
+
+      // Add Authorization header if token exists
+     
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`
+      }
+
         const response = await fetch(`${baseUrl}/v1/room/`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             body: JSON.stringify(roomData),
         });
 
@@ -138,7 +171,19 @@ export const getStaffShifts = async () => {
     }
 
     try {
-        const response = await fetch(`${baseUrl}/v1/staff/shifts`, { cache: 'no-store' });
+      const headers: HeadersInit = {}
+
+      // Add Authorization header if token exists
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`
+      }
+
+        const response = await fetch(`${baseUrl}/v1/staff/shifts`, {
+          method: 'GET',
+          headers: headers,
+          cache: 'no-store'
+        });
         if (!response.ok) {
             throw new Error(`Failed to fetch staff shifts: ${response.status}`);
         }

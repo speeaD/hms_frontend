@@ -1,13 +1,16 @@
 "use client"
 
-import { signIn } from "next-auth/react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const { login } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -15,28 +18,24 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false
-      })
+      console.log('Login form submitted with email:', email)
 
-      if (result?.error) {
-        setError(result.error)
-      } else {
-        // Redirect to dashboard or intended page
-        window.location.href = "/"
-      }
-    } catch (err) {
-      setError("An unexpected error occurred")
-      console.error(err)
+      // Use the auth hook's login function
+      await login(email, password)
+
+      // On successful login, redirect to home
+      console.log('Login successful, redirecting to home')
+      router.push("/")
+    } catch (err: any) {
+      console.error('Login error in page:', err)
+      setError(err.message || "An unexpected error occurred")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="lg:ml-64 min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="lg min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">Hotelier Admin</h1>
@@ -98,12 +97,7 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <div className="text-center text-sm text-gray-500">
-          <p>Demo credentials:</p>
-          <p className="font-mono">admin@hotelier.com / password123</p>
-          <p className="font-mono">manager@hotelier.com / password123</p>
-          <p className="font-mono">staff@hotelier.com / password123</p>
-        </div>
+
       </div>
     </div>
   )

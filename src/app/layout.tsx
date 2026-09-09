@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { Analytics } from "@vercel/analytics/next";
-import { SessionProvider } from "next-auth/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,11 +28,9 @@ export default function DashboardLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SessionProvider>
-          <Sidebar />
-          <main>{children}</main>
-          <Analytics />
-        </SessionProvider>
+        <Sidebar />
+        <main>{children}</main>
+        <Analytics />
       </body>
     </html>
   );
