@@ -39,7 +39,7 @@ declare global {
 
   interface Rooms {
     id: string;
-    roomNumber: number;
+    roomNumber: string;
     type: string;
     price: number;
     status: RoomStatus;

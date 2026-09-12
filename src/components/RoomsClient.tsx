@@ -139,7 +139,8 @@ export default function RoomsClient({ rooms, tabs }: Props) {
 
     try {
       const roomData: Omit<Rooms, 'id'> = {
-        roomNumber: Number(roomForm.roomNumber),
+        name: roomForm.roomNumber, // Assuming roomNumber is used as name
+        roomNumber: roomForm.roomNumber,
         type: roomForm.type,
         price: Number(roomForm.price),
         status: roomForm.status as Rooms['status'],
@@ -148,6 +149,8 @@ export default function RoomsClient({ rooms, tabs }: Props) {
           .map((a: string) => a.trim())
           .filter(Boolean),
         capacity: Number(roomForm.capacity),
+        floor: roomForm.floor ? Number(roomForm.floor) : undefined,
+        bedType: "double" // Assuming bedType is optional and not provided in the form
      
       }
 
@@ -332,7 +335,7 @@ export default function RoomsClient({ rooms, tabs }: Props) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Room Number</label>
                 <input
-                  type="number"
+                  type="text"
                   name="roomNumber"
                   value={roomForm.roomNumber}
                   onChange={handleAddRoomChange}
@@ -359,7 +362,7 @@ export default function RoomsClient({ rooms, tabs }: Props) {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price (NGN)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -623,7 +626,7 @@ export default function RoomsClient({ rooms, tabs }: Props) {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="p-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 disabled:opacity-50"
               >
@@ -633,7 +636,7 @@ export default function RoomsClient({ rooms, tabs }: Props) {
                 Page {currentPage} of {totalPages}
               </span>
               <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="p-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 disabled:opacity-50"
               >

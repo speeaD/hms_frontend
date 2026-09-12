@@ -2,42 +2,43 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // This function can be marked `async` if using `await` inside
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const publicRoutes = ['/auth/login', '/auth/logout']
-  const isPublicRoute = publicRoutes.includes(pathname)
-
-  // Get token from cookies
+export function proxy(request: NextRequest) {
+  // Get the auth-token cookie
   const token = request.cookies.get('auth-token')?.value
-  const isAuth = !!token
 
-  // Optional: validate token expiration and payload here
-  // For now, we just check if token exists
+  // Get the pathname of the request (e.g. /, /about, /dashboard)
+  const { pathname } = request.nextUrl
 
-  // Redirect to login if not authenticated and trying to access a protected page
-  if (!isAuth && !isPublicRoute) {
-     return NextResponse.redirect(new URL('/auth/login', request.url))
+  // Define paths that don't require authentication
+  const publicPaths = ['/auth/login', '/auth/logout', '/api/test']
+
+  // Check if the path is public
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+
+  // If token exists, user is authenticated
+  const isAuthenticated = !!token
+
+  // Redirect to login if:
+  // 1. Path is NOT public AND
+  // 2. User is NOT authenticated
+  if (!isPublicPath && !isAuthenticated) {
+    const loginUrl = new URL('/auth/login', request.url)
+    loginUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // Optional: redirect to home if authenticated and trying to access login page
-  if (isAuth && isPublicRoute) {
+  // Redirect to dashboard if:
+  // 1. Path is login page AND
+  // 2. User IS authenticated
+  if (pathname.startsWith('/auth/login') && isAuthenticated) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
+  // Otherwise, allow the request to continue
   return NextResponse.next()
 }
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes (handled by route handlers themselves)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
-  ],
+  matcher: '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
 }

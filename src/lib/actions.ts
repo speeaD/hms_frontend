@@ -1,19 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireApiBaseUrl, RESERVATIONS_PATH } from "./config";
-import { cookies } from 'next/headers';
+import { headers } from "next/headers";
 
-// Helper function to get JWT token from cookies (for server actions)
-const getAuthToken = async (): Promise<string | null> => {
-  // For server actions, we need to get the token from cookies
-  try {
-    const tokenStore = cookies();
-    return (await tokenStore).get('auth-token')?.value || null;
-  } catch (error) {
-    // If we're not in a server context (e.g., during SSR or SSG), return null
-    return null;
+async function getApiRequest(path: string, init: RequestInit = {}): Promise<Response> {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
+  const forwardedHeaders = new Headers(init.headers);
+  const cookie = requestHeaders.get("cookie");
+
+  if (cookie) {
+    forwardedHeaders.set("cookie", cookie);
   }
+
+  return fetch(`${protocol}://${host}/api/data${path}`, {
+    ...init,
+    headers: forwardedHeaders,
+  });
 }
 
 export type ActionResult<T = undefined> =
@@ -42,8 +46,6 @@ export interface CreateReservationInput {
 export async function createReservation(
   input: CreateReservationInput
 ): Promise<ActionResult<{ id: string }>> {
-  const base = requireApiBaseUrl();
-
   if (
     !input.firstName ||
     !input.lastName ||
@@ -81,17 +83,12 @@ export async function createReservation(
     paymentStatus: input.markAsPaid ? "paid" : "pending",
   };
 
-  // Get auth token for authorization header
-  const token = getAuthToken();
-
   let res: Response;
   try {
-    res = await fetch(`${base}${RESERVATIONS_PATH}reserve-room`, {
+    res = await getApiRequest("/reservations/reserve-room", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Add Authorization header if token exists
-        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(payload),
     });
@@ -123,16 +120,12 @@ export async function updateReservationStatus(
   id: string,
   status: ReservationStatus
 ): Promise<ActionResult> {
-  const base = requireApiBaseUrl();
-
   let res: Response;
   try {
-    res = await fetch(`${base}${RESERVATIONS_PATH}/update-reservation/${encodeURIComponent(id)}`, {
+    res = await getApiRequest(`/reservations/update-reservation/${encodeURIComponent(id)}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Add Authorization header if token exists
-        ...(await getAuthToken() ? { "Authorization": `Bearer ${getAuthToken()}` } : {}),
       },
       body: JSON.stringify({ status: status }),
     });
